@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -8,135 +9,139 @@ namespace grafy
 {
     public partial class Form1 : Form
     {
-        private readonly List<Button> Tops = new List<Button>();
-        private readonly List<Edge> Edges = new List<Edge>();
-        private int topCounter = 0;
-        private int edgeCounter = 0;
-        private Button EdgeStart = null;
-        public class Edge
-        {
-            public Button EdgeStart { get; set; }
-            public Button EdgeEnd { get; set; }
-            public int ID {  get; set; }
+        Graph Graph = new Graph();
 
-            public void Draw(Graphics g, Pen pen)
-            {
-                Point startPoint = new Point(EdgeStart.Left + EdgeStart.Width / 2, EdgeStart.Top + EdgeStart.Height / 2);
-                Point endPoint = new Point(EdgeEnd.Left + EdgeEnd.Width / 2, EdgeEnd.Top + EdgeEnd.Height / 2);
-
-                g.DrawLine(pen, startPoint, endPoint);
-            }
-        }
         public Form1()
         {
             InitializeComponent();
-        }
-        private void CreateTop(Point location)
-        {
-            Button top = new Button
-            {
-                Size = new Size(80, 80),
-                BackColor = Color.CadetBlue,
-                FlatStyle = FlatStyle.Flat,
-                FlatAppearance = { BorderSize = 0 },
-                Text = topCounter.ToString(),
-                ForeColor = Color.Gainsboro,
-                Font = new Font("Arial", 25, FontStyle.Bold),
-                Location = location
-            };
-
-            top.MouseDown += Top_MouseDown;
-            top.MouseMove += Top_MouseMove;
-
-            topCounter++;
-
-            Tops.Add(top);
-            Controls.Add(top);
         }
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                CreateTop(e.Location);
+                CreateVertex(e.Location);
             }
         }
+        private void CreateVertex(Point location)
+        {
+            Vertex Vertex = new Vertex(location);
 
-        private void Top_MouseMove(object sender, MouseEventArgs e)
+            Vertex.MouseDown += Vertex_MouseDown;
+            Vertex.MouseMove += Vertex_MouseMove;
+
+            if(Graph.Vertexes.Count() == 0)
+            {
+                Vertex.BackColor = Color.RoyalBlue;
+                Graph.StartNode = Vertex;
+            }
+
+            Graph.Vertexes.Add(Vertex);
+            Controls.Add(Vertex);
+        }
+        
+        private void Vertex_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                MoveTop((Control)sender, e.Location);
+                MoveVertex((Control)sender, e.Location);
                 UpdateEdges();
             }
         }
 
-        private void Top_MouseDown(object sender, MouseEventArgs e)
+        private void Vertex_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
-                HandleRightMouseDown((Button)sender);
-            }
-        }
-
-        private void MoveTop(Control top, Point location)
-        {
-            int deltaX = location.X - (top.Width / 2);
-            int deltaY = location.Y - (top.Height / 2);
-
-            top.Location = new Point(top.Location.X + deltaX, top.Location.Y + deltaY);
-        }
-
-        private void HandleRightMouseDown(Button top)
-        {
-            if (EdgeStart == null)
-            {
-                EdgeStart = top;
-                EdgeStart.BackColor = Color.WhiteSmoke;
-            }
-            else
-            {
-                EdgeStart.BackColor = Color.CadetBlue;
-
-                DrawEdge(EdgeStart, top, edgeCounter);
-
-                EdgeStart = null;
-            }
-        }
-
-        private void DrawEdge(Button start, Button end, int edgeCounter)
-        {
-            Edge newEdge = new Edge
-            {
-                EdgeStart = start,
-                EdgeEnd = end,
-                ID = edgeCounter
-            };
-
-            bool edgeExists = false;
-
-            foreach (Edge edge in Edges)
-            {
-                if ((edge.EdgeStart == newEdge.EdgeStart && edge.EdgeEnd == newEdge.EdgeEnd) ||
-                    (edge.EdgeStart == newEdge.EdgeEnd && edge.EdgeEnd == newEdge.EdgeStart))
+                if (Graph.EdgeStart == null)
                 {
-                    edgeExists = true;
-                    Console.WriteLine("Krawędź już istnieje");
-                    break;
+                    Graph.EdgeStart = (Vertex)sender;
+                    Graph.EdgeStart.BackColor = Color.SlateGray;
+                }
+                else
+                {
+                    Graph.EdgeStart.BackColor = Color.CadetBlue;
+
+                    DrawEdge(Graph.EdgeStart, (Vertex)sender);
+
+                    Graph.EdgeStart = null;
                 }
             }
+            else if (e.Button == MouseButtons.Left)
+            {
+                if ((Vertex)sender == Graph.EndNode)
+                {
+                    return;
+                }
+                else if (Graph.StartNode != null)
+                {
+                    Graph.StartNode.BackColor = Color.CadetBlue;
+                }
 
-            if (!edgeExists)
+                Graph.StartNode = (Vertex)sender;
+                Graph.StartNode.BackColor = Color.RoyalBlue;
+            }
+            else if (e.Button == MouseButtons.Middle)
+            {
+                if (Graph.EndNode == (Vertex)sender) {
+                    Graph.EndNode.BackColor = Color.CadetBlue;
+                    Graph.EndNode = null;
+                    return;
+                }
+                else if ((Vertex)sender == Graph.StartNode)
+                {
+                    return;
+                }
+                else if (Graph.EndNode != null)
+                {
+                    Graph.EndNode.BackColor = Color.CadetBlue;
+                }
+                Graph.EndNode = (Vertex)sender;
+                Graph.EndNode.BackColor = Color.DodgerBlue;
+            }
+        }
+
+        private void MoveVertex(Control Vertex, Point location)
+        {
+            int deltaX = location.X - (Vertex.Width / 2);
+            int deltaY = location.Y - (Vertex.Height / 2);
+
+            Vertex.Location = new Point(Vertex.Location.X + deltaX, Vertex.Location.Y + deltaY);
+        }
+        private void DrawEdge(Vertex Start, Vertex End)
+        {
+            Edge NewEdge = new Edge(Start, End);
+
+            if (!EdgeExists(NewEdge))
             {
                 using (Graphics g = CreateGraphics())
                 {
-                    using (Pen edgePen = new Pen(Color.CadetBlue, 5))
-                    {
-                        newEdge.Draw(g, edgePen);
-                    }
+                    NewEdge.Draw(g);
                 }
 
-                Edges.Add(newEdge);
+                Graph.Edges.Add(NewEdge);
             }
+
+            Graph.StartNode.BackColor = Color.RoyalBlue;
+
+            if(Graph.EndNode != null)
+            {
+                Graph.EndNode.BackColor = Color.DodgerBlue;
+            }
+        }
+
+        private bool EdgeExists(Edge NewEdge)
+        {
+            foreach (Edge Edge in Graph.Edges)
+            {
+                if ((Edge.Start == NewEdge.Start && Edge.End == NewEdge.End) ||
+                    (Edge.Start == NewEdge.End && Edge.End == NewEdge.Start))
+                {
+                    Graph.Edges.Remove(Edge);
+                    UpdateEdges();
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void UpdateEdges()
@@ -145,11 +150,11 @@ namespace grafy
             {
                 g.Clear(BackColor);
 
-                foreach (Edge edge in Edges)
+                foreach (Edge Edge in Graph.Edges)
                 {
                     using (Pen edgePen = new Pen(Color.CadetBlue, 5))
                     {
-                        edge.Draw(g, edgePen);
+                        Edge.Draw(g);
                     }
                 }
             }
@@ -157,120 +162,71 @@ namespace grafy
 
         private void ResetBtn_Click(object sender, EventArgs e)
         {
-            foreach (Button top in Tops)
+            foreach (Vertex Vertex in Graph.Vertexes)
             {
-                Controls.Remove(top);
+                Controls.Remove(Vertex);
             }
 
-            topCounter = 0;
-            edgeCounter = 0;
-            EdgeStart = null;
-
-            Tops.Clear();
-            Edges.Clear();
-
-            visited.Clear();
-            queue.Clear();
+            Vertex.ClearID();
+            Graph.Clear();
 
             Refresh();
         }
 
+        private void ShowAnimation(List<Vertex> Visited, int delay, int pause)
+        {
+
+            foreach (Vertex item in Visited)
+            {
+                item.BackColor = Color.Khaki;
+                Refresh();
+                UpdateEdges();
+                Thread.Sleep(delay);
+            }
+
+            Thread.Sleep(pause);
+
+            foreach (Vertex Vertex in Graph.Vertexes)
+            {
+                Vertex.BackColor = Color.CadetBlue;
+            }
+
+            Graph.StartNode.BackColor = Color.RoyalBlue;
+
+            if(Graph.EndNode != null )
+            {
+                Graph.EndNode.BackColor = Color.DodgerBlue;
+            }
+        }
+
         private void BFS_Click(object sender, EventArgs e)
         {
-            Button startNode = Tops.Find(top => top.Text == "0");
-
-            BFS_Start();
-            visited.Clear();
-            queue.Clear();
-        }
-
-        private readonly List<Button> visited = new List<Button>();
-        private readonly List<Button> queue = new List<Button>();
-
-        private void BFS_Start()
-        {
-            foreach(Button top in Tops)
+            if(Graph.Vertexes.Count > 0)
             {
-                queue.Add(top);
+                BFS BFS = new BFS(Graph);
+                BFS.Execute();
+                ShowAnimation(BFS.Visited, 300, 700);
             }
-
-            while (queue.Count > 0)
-            {
-                Button node = queue[0];
-                queue.RemoveAt(0);
-
-                if (!visited.Contains(node))
-                {
-                    visited.Add(node);
-                    List<Button> neighbours = GetNeighbours(node);
-                    foreach (var item in neighbours)
-                    {
-                        if (!visited.Contains(item))
-                        {
-                            queue.Add(item);
-                        }
-                    }
-                }
-            }
-            ShowAnimation();
-        }
-
-
-        private List<Button> GetNeighbours(Button currentNode)
-        {
-            var neighbours = new List<Button>();
-
-            foreach (Edge edge in Edges)
-            {
-                if (edge.EdgeStart == currentNode)
-                {
-                    neighbours.Add(edge.EdgeEnd);
-                }
-                else if (edge.EdgeEnd == currentNode)
-                {
-                    neighbours.Add(edge.EdgeStart);
-                }
-            }
-
-            return neighbours;
         }
 
         private void DFS_Click(object sender, EventArgs e)
         {
-            Button startNode = Tops.Find(top => top.Text == "0");
-
-            DFS_Start(startNode);
-
-            ShowAnimation();
-            visited.Clear();
-        }
-
-        private void DFS_Start(Button node)
-        {
-            visited.Add(node);
-            List<Button> neighbours =  GetNeighbours(node);
-            foreach (var item in neighbours)
+            if(Graph.Vertexes.Count > 0)
             {
-                if (!visited.Contains(item))
-                {
-                    DFS_Start(item);
-                }
+                DFS DFS = new DFS(Graph);
+                DFS.Execute();
+                ShowAnimation(DFS.Visited, 300, 700);
             }
         }
 
-        private void ShowAnimation()
+        private void AStarBtn_Click(object sender, EventArgs e)
         {
-            foreach (Button item in visited)
+            if(Graph.EndNode!=null)
             {
-                item.BackColor = Color.White;
-                Refresh();
-                UpdateEdges();
-                Thread.Sleep(500);
-            }
-            Thread.Sleep(1000);
-            foreach (Button top in Tops)
-            {
-                top.BackColor = Color.CadetBlue;
+                AStar AStar = new AStar(Graph);
+                AStar.Execute();
+                ShowAnimation(AStar.AStarVisited, 300, 1000);
+                ShowAnimation(AStar.Visited, 500, 2500);
             }
         }
     }
