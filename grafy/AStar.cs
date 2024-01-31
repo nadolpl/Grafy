@@ -30,6 +30,7 @@ internal class AStar : Algorithm
             if (currentVertex == EndNode)
             {
                 GetPath(predecessors);
+                return;
             }
 
             foreach (Vertex neighbour in GetNeighbours(currentVertex))
@@ -49,7 +50,7 @@ internal class AStar : Algorithm
             }
         }
     }
-    private static Vertex BestVertex(HashSet<Vertex> openSet, Dictionary<Vertex, double> distances)
+    private Vertex BestVertex(HashSet<Vertex> openSet, Dictionary<Vertex, double> distances)
     {
         return openSet.OrderBy(v => distances[v]).First();
     }

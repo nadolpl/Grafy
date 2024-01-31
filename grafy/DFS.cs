@@ -14,11 +14,11 @@ namespace grafy
         {
             Visited.Add(Node);
             List<Vertex> Neighbours = GetNeighbours(Node);
-            foreach (Vertex item in Neighbours)
+            foreach (Vertex neighbour in Neighbours)
             {
-                if (!Visited.Contains(item))
+                if (!Visited.Contains(neighbour))
                 {
-                    Node = item;
+                    Node = neighbour;
                     Execute();
                 }
             }

@@ -334,13 +334,13 @@
     <value>10, 641</value>
   </data>
   <data name="label3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>304, 15</value>
+    <value>284, 15</value>
   </data>
   <data name="label3.TabIndex" type="System.Int32, mscorlib">
     <value>6</value>
   </data>
   <data name="label3.Text" xml:space="preserve">
-    <value>Scroll (click on Vertex) - Select goal (for A*)</value>
+    <value>Scroll (click on Vertex) - Set goal (for A*)</value>
   </data>
   <data name="label3.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>BottomLeft</value>
